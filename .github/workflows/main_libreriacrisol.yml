@@ -59,9 +59,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A48911C2862748688EFFFCC39D229230 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3E8F57F597F54DC184D496E6996A3702 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9C349D19E55F4D55AB70F2803CD8A5D0 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_EAD787AB8CF3483C9C136CC0A1A7CFCA }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_D5EB08B33F8F40E5A1A685DC2A486B1E }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E5A46740604D4BEBA3203FAC98EC23EA }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -70,3 +70,4 @@ jobs:
           app-name: 'LibreriaCrisolB'
           slot-name: 'Production'
           package: 'ROOT.war' # <--- MODIFICACIÓN: Ahora apunta al WAR renombrado
+
