@@ -13,24 +13,12 @@ public class CategoriaDTO {
 
     @NotBlank(message = "El campo descripción es obligatorio.")
     @Size(min = 10, max = 255, message = "La descripción debe tener entre 10 y 255 caracteres.")
+    @Pattern(regexp = ".*[a-zA-ZáéíóúÁÉÍÓÚñÑ].*", message = "La descripción debe contener al menos una letra.")
     private String descripcion;
 
-    public CategoriaDTO() {
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
+    public CategoriaDTO() {}
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 }
