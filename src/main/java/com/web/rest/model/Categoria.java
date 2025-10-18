@@ -2,6 +2,7 @@ package com.web.rest.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,12 +17,15 @@ public class Categoria {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotBlank(message = "El nombre de la categoría es obligatorio")
-    @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
-    @Column(nullable = false, unique = true)
+    @NotBlank(message = "El campo nombre es obligatorio.")
+    @Size(min = 3, max = 30, message = "El nombre debe tener entre 3 y 30 caracteres.")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras y espacios.")
+    @Column(nullable = false, unique = true, length = 30)
     private String nombre;
 
-    @Column(columnDefinition = "TEXT")
+    @NotBlank(message = "El campo descripción es obligatorio.")
+    @Size(min = 10, max = 255, message = "La descripción debe tener entre 10 y 255 caracteres.")
+    @Column(length = 255) 
     private String descripcion;
 
     @CreationTimestamp
@@ -32,9 +36,11 @@ public class Categoria {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // Constructor vacío requerido por JPA
     public Categoria() {
     }
 
+    // Getters y Setters
     public Integer getId() {
         return id;
     }

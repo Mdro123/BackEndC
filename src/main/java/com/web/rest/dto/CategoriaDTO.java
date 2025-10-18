@@ -1,33 +1,21 @@
 package com.web.rest.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class CategoriaDTO {
 
-    private Integer id;
-
-    @NotBlank(message = "El nombre de la categoría es obligatorio")
-    @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
+    @NotBlank(message = "El campo nombre es obligatorio.")
+    @Size(min = 3, max = 30, message = "El nombre debe tener entre 3 y 30 caracteres.")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras y espacios.")
     private String nombre;
 
-    @Size(max = 1000, message = "La descripción no puede exceder los 1000 caracteres")
+    @NotBlank(message = "El campo descripción es obligatorio.")
+    @Size(min = 10, max = 255, message = "La descripción debe tener entre 10 y 255 caracteres.")
     private String descripcion;
 
     public CategoriaDTO() {
-    }
-
-    public CategoriaDTO(String nombre, String descripcion) {
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public String getNombre() {
