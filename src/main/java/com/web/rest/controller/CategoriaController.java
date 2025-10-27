@@ -3,7 +3,7 @@ package com.web.rest.controller;
 import com.web.rest.dto.CategoriaDTO;
 import com.web.rest.model.Categoria;
 import com.web.rest.service.CategoriaService;
-import jakarta.validation.Valid;
+import jakarta.validation.Valid; // Asegúrate de tener esta importación
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categorias")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "http://localhost:4200/") // Ajusta si es necesario
 public class CategoriaController {
 
     @Autowired
@@ -40,12 +40,21 @@ public class CategoriaController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<Categoria> saveCategoria(@Valid @RequestBody CategoriaDTO categoriaDTO) {
-        Categoria result = categoriaService.saveCategoria(categoriaDTO);
-        HttpStatus status = (categoriaDTO.getId() == null) ? HttpStatus.CREATED : HttpStatus.OK;
-        return new ResponseEntity<>(result, status);
+    public ResponseEntity<Categoria> createCategoria(@Valid @RequestBody CategoriaDTO categoriaDTO) {
+        // saveCategoria manejará la creación (ID del DTO es null)
+        Categoria nuevaCategoria = categoriaService.saveCategoria(categoriaDTO);
+        return new ResponseEntity<>(nuevaCategoria, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<Categoria> updateCategoria(@PathVariable Integer id, @Valid @RequestBody CategoriaDTO categoriaDTO) {
+        // Establece el ID en el DTO antes de llamar a saveCategoria
+        categoriaDTO.setId(id);
+        Categoria categoriaActualizada = categoriaService.saveCategoria(categoriaDTO);
+        return ResponseEntity.ok(categoriaActualizada);
+    }
+    
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategoria(@PathVariable Integer id) {
