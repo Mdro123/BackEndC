@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Size;
 
 public class CategoriaDTO {
 
+    private Integer id; 
+
     @NotBlank(message = "El campo nombre es obligatorio.")
     @Size(min = 3, max = 30, message = "El nombre debe tener entre 3 y 30 caracteres.")
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras y espacios.")
@@ -16,7 +18,11 @@ public class CategoriaDTO {
     @Pattern(regexp = ".*[a-zA-ZáéíóúÁÉÍÓÚñÑ].*", message = "La descripción debe contener al menos una letra.")
     private String descripcion;
 
-    public CategoriaDTO() {}
+    public CategoriaDTO() {
+    }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getDescripcion() { return descripcion; }
