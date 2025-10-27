@@ -4,80 +4,89 @@ import com.web.rest.dto.CategoriaDTO;
 import com.web.rest.exception.ResourceNotFoundException;
 import com.web.rest.model.Categoria;
 import com.web.rest.repository.CategoriaRepository;
+import com.web.rest.repository.ProductoRepository; // Asegúrate de que esta importación exista
 import com.web.rest.service.CategoriaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional; // Importa Transactional
 
 import java.util.List;
 import java.util.Optional;
 
-import com.web.rest.repository.ProductoRepository;
-
 @Service
 public class CategoriaServiceImpl implements CategoriaService {
 
-	@Autowired
-	private CategoriaRepository categoriaRepository;
+    @Autowired
+    private CategoriaRepository categoriaRepository;
 
-	@Autowired
-	private ProductoRepository productoRepository;
+    @Autowired
+    private ProductoRepository productoRepository; // Necesario para la validación al borrar
 
-	@Override
-	public List<Categoria> getAllCategorias() {
-		return categoriaRepository.findAll();
-	}
+    @Override
+    public List<Categoria> getAllCategorias() {
+        return categoriaRepository.findAll();
+    }
 
-	@Override
-	public Categoria getCategoriaById(Integer id) {
-		return categoriaRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
-	}
+    @Override
+    public Categoria getCategoriaById(Integer id) {
+        return categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
+    }
 
-	@Override
-	public List<Categoria> getCategoriasByNombre(String nombre) {
-		return categoriaRepository.findByNombreContainingIgnoreCase(nombre);
-	}
+    @Override
+    public List<Categoria> getCategoriasByNombre(String nombre) {
+        return categoriaRepository.findByNombreContainingIgnoreCase(nombre);
+    }
 
-	@Override
-	public Categoria saveCategoria(CategoriaDTO categoriaDTO) {
-		Categoria categoria;
+    // --- MÉTODO SEPARADO PARA CREAR ---
+    @Override
+    public Categoria createCategoria(CategoriaDTO categoriaDTO) {
+        // Verificar si ya existe una categoría con el mismo nombre
+        if (categoriaRepository.findByNombreIgnoreCase(categoriaDTO.getNombre()).isPresent()) {
+            throw new IllegalArgumentException("Ya existe una categoría con el nombre: " + categoriaDTO.getNombre());
+        }
 
-		if (categoriaDTO.getId() != null) {
-			categoria = categoriaRepository.findById(categoriaDTO.getId()).orElseThrow(
-					() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + categoriaDTO.getId()));
+        Categoria categoria = new Categoria();
+        categoria.setNombre(categoriaDTO.getNombre());
+        categoria.setDescripcion(categoriaDTO.getDescripcion());
+        return categoriaRepository.save(categoria);
+    }
 
-			if (!categoria.getNombre().equalsIgnoreCase(categoriaDTO.getNombre())) {
-				Optional<Categoria> categoriaConMismoNombre = categoriaRepository
-						.findByNombreIgnoreCase(categoriaDTO.getNombre());
-				if (categoriaConMismoNombre.isPresent()
-						&& !categoriaConMismoNombre.get().getId().equals(categoriaDTO.getId())) {
-					throw new IllegalArgumentException(
-							"Ya existe otra categoría con el nombre: " + categoriaDTO.getNombre());
-				}
-			}
-		} else {
-			if (categoriaRepository.findByNombreIgnoreCase(categoriaDTO.getNombre()).isPresent()) {
-				throw new IllegalArgumentException(
-						"Ya existe una categoría con el nombre: " + categoriaDTO.getNombre());
-			}
-			categoria = new Categoria();
-		}
+    // --- MÉTODO SEPARADO PARA ACTUALIZAR ---
+    @Override
+    public Categoria updateCategoria(Integer id, CategoriaDTO categoriaDTO) {
+        // 1. Busca la categoría EXISTENTE por su ID
+        Categoria categoriaExistente = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
 
-		categoria.setNombre(categoriaDTO.getNombre());
-		categoria.setDescripcion(categoriaDTO.getDescripcion());
+        // 2. Verifica si el NUEVO nombre ya está en uso por OTRA categoría
+        Optional<Categoria> categoriaConMismoNombre = categoriaRepository.findByNombreIgnoreCase(categoriaDTO.getNombre());
+        
+        // Compara el ID de la categoría encontrada con el ID de la que estamos actualizando
+        if (categoriaConMismoNombre.isPresent() && !categoriaConMismoNombre.get().getId().equals(categoriaExistente.getId())) {
+            throw new IllegalArgumentException("Ya existe otra categoría con el nombre: " + categoriaDTO.getNombre());
+        }
 
-		return categoriaRepository.save(categoria);
-	}
+        // 3. Actualiza los datos
+        categoriaExistente.setNombre(categoriaDTO.getNombre());
+        categoriaExistente.setDescripcion(categoriaDTO.getDescripcion());
+        
+        // 4. Guarda
+        return categoriaRepository.save(categoriaExistente);
+    }
 
-	@Override
-    @Transactional
+    @Override
+    @Transactional // Es buena práctica para asegurar consistencia si hay relaciones
     public void deleteCategoria(Integer id) {
-		Categoria categoria = categoriaRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
-		if (productoRepository.countByCategoriaId(id) > 0) {
-			throw new IllegalArgumentException("No se puede eliminar la categoría '" + categoria.getNombre() + "' porque tiene libros asociados.");
-			}
-		categoriaRepository.deleteById(id);
-		}
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
+        
+        // Verifica si hay productos asociados ANTES de intentar borrar
+        // Asegúrate de tener un método countByCategoriaId en ProductoRepository
+        if (productoRepository.countByCategoriaId(id) > 0) { 
+            throw new IllegalArgumentException("No se puede eliminar la categoría '" + categoria.getNombre() + "' porque tiene libros asociados.");
+        }
+        
+        categoriaRepository.deleteById(id);
+    }
 }
