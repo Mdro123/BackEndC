@@ -4,7 +4,7 @@ import com.web.rest.service.impl.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // Asegúrate de que HttpMethod esté importado
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -25,7 +25,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity // Habilita las anotaciones @PreAuthorize en tus controladores
 public class SecurityConfig {
 
     @Autowired
@@ -52,7 +52,7 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // ✅ Configuración global de CORS (Tu código original - sin cambios)
+    // Tu bean de CORS está perfecto, no se necesita cambiar
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -75,15 +75,33 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-
-                .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/chatbot/ask").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/metodos-pago/**").permitAll()
-
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
+                
+                // --- Endpoints POST Públicos ---
+                .requestMatchers(HttpMethod.POST,
+                    "/api/usuarios/registro",
+                    "/api/usuarios/login",
+                    "/api/chatbot/ask" // Permite el chatbot
+                ).permitAll()
+                
+                // --- Endpoints GET Públicos (¡AQUÍ ESTÁ LA CORRECCIÓN!) ---
+                .requestMatchers(HttpMethod.GET,
+                    "/api/productos",
+                    "/api/productos/{id}",
+                    "/api/productos/buscar",
+                    "/api/productos/categoria/{idCategoria}",
+                    "/api/productos/mas-vendidos", // Permite los más vendidos
+                    "/api/categorias",
+                    "/api/categorias/**", // Permite /categorias/{id} y /categorias/buscar
+                    "/api/metodos-pago",
+                    "/api/metodos-pago/**"
+                ).permitAll()
+                
+                // --- Endpoints de Admin ---
+                // No necesitamos .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // porque ya estás usando @PreAuthorize en tus controladores,
+                // lo cual es más flexible.
+                
+                // --- Todo lo demás debe estar autenticado ---
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
