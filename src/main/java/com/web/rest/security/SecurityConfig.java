@@ -79,4 +79,22 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
 
-                .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").perm
+                .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").permitAll()
+
+                // ✅ Agregado para permitir el acceso al chatbot sin autenticación
+                .requestMatchers("/api/chatbot/**").permitAll()
+
+                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/metodos-pago/**").permitAll()
+
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+}
