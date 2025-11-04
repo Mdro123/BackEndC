@@ -4,7 +4,7 @@ import com.web.rest.service.impl.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -56,8 +56,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:4200", 
-                "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" 
+                "http://localhost:4200", // Angular local
+                "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" // Frontend en Azure
+            
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
@@ -68,40 +69,22 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
+    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                
-                // --- Endpoints POST Públicos ---
-                .requestMatchers(HttpMethod.POST,
-                    "/api/usuarios/registro",
-                    "/api/usuarios/login",
-                    "/api/chatbot/ask" // Permite el chatbot
-                ).permitAll()
-                
-                // --- Endpoints GET Públicos ---
-                .requestMatchers(HttpMethod.GET,
-                    "/api/productos",
-                    "/api/productos/**", // Permite /productos/{id}, /buscar, /categoria/**
-                    "/api/productos/mas-vendidos", 
-                    "/api/categorias",
-                    "/api/categorias/**", 
-                    "/api/metodos-pago",
-                    "/api/metodos-pago/**"
-                ).permitAll()
-                
-                // --- Endpoints de Admin (Protegidos por @PreAuthorize) ---
-                // .requestMatchers("/api/admin/**").hasRole("ADMIN") // Puedes quitar esto si usas @PreAuthorize
+                .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/metodos-pago/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // --- Todo lo demás debe estar autenticado ---
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }
