@@ -34,45 +34,62 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
-    // ... (tus @Beans de PasswordEncoder, AuthenticationManager, etc. están bien)
     @Bean
-    public PasswordEncoder passwordEncoder() { /* ... */ }
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() { /* ... */ }
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception { /* ... */ }
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() { /* ... */ }
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(customUserDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:4200", // Angular local
+                "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" // Frontend en Azure
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
+                // Endpoints públicos de autenticación
+                .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").permitAll()
                 
-                // --- SECCIÓN DE ENDPOINTS PÚBLICOS CORREGIDA ---
-                
-                // 1. Endpoints de Autenticación (POST)
-                .requestMatchers(HttpMethod.POST, "/api/usuarios/registro", "/api/usuarios/login").permitAll()
-                
-                // 2. Endpoint del Chatbot (POST)
+                // --- LÍNEA AÑADIDA PARA EL CHATBOT ---
                 .requestMatchers(HttpMethod.POST, "/api/chatbot/ask").permitAll()
+                // ------------------------------------
 
-                // 3. Endpoints de Catálogo (GET)
-                .requestMatchers(HttpMethod.GET, 
-                    "/api/productos/**",         // Permite ver todos los productos y un producto por ID
-                    "/api/categorias/**",        // Permite ver todas las categorías
-                    "/api/metodos-pago/**",    // Permite ver los métodos de pago
-                    "/api/productos/mas-vendidos" // Permite ver los más vendidos (si la ruta es esta)
-                ).permitAll()
-                
-                // --- FIN DE LA CORRECCIÓN ---
+                // Endpoints públicos de solo lectura (GET)
+                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/metodos-pago/**").permitAll()
 
-                // 4. Endpoints de Administrador
+                // Endpoints de administrador
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 5. Todo lo demás requiere autenticación
+                // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
