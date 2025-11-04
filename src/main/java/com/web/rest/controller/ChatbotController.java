@@ -1,29 +1,80 @@
 package com.web.rest.controller;
 
-import com.web.rest.dto.ChatRequestDTO;
-import com.web.rest.dto.ChatResponseDTO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate; 
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// DTOs definidos como clases anidadas estáticas para simplicidad
+class ChatRequestDTO {
+    @NotBlank
+    private String message;
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+}
+
+class ChatResponseDTO {
+    private String reply;
+    public ChatResponseDTO(String reply) { this.reply = reply; }
+    public String getReply() { return reply; }
+    public void setReply(String reply) { this.reply = reply; }
+}
+
+// Estructura del JSON para la API de Gemini
+class GeminiRequest {
+    public List<Content> contents;
+    public GeminiRequest(String text) {
+        this.contents = Collections.singletonList(new Content(text));
+    }
+    static class Content {
+        public List<Part> parts;
+        public Content(String text) {
+            this.parts = Collections.singletonList(new Part(text));
+        }
+    }
+    static class Part {
+        public String text;
+        public Part(String text) { this.text = text; }
+    }
+}
+
+// Estructura de la respuesta JSON de Gemini (simplificada)
+class GeminiResponse {
+    public List<Candidate> candidates;
+    static class Candidate {
+        public Content content;
+    }
+    static class Content {
+        public List<Part> parts;
+    }
+    static class Part {
+        public String text;
+    }
+    public String getReplyText() {
+        try {
+            return this.candidates.get(0).content.parts.get(0).text;
+        } catch (Exception e) {
+            return null; // Devuelve null si la estructura no es la esperada
+        }
+    }
+}
+
+
 @RestController
 @RequestMapping("/api/chatbot")
-@CrossOrigin(origins = "http://localhost:4200/") // Permite peticiones desde tu frontend
+@CrossOrigin(origins = "http://localhost:4200/")
 public class ChatbotController {
 
-    // Inyecta la URL de la API de Gemini desde application.properties
     @Value("${gemini.api.url}")
     private String geminiApiUrl;
 
-    // RestTemplate es una forma sencilla de hacer llamadas a otras APIs
     private final RestTemplate restTemplate = new RestTemplate();
 
     @PostMapping("/ask")
@@ -33,47 +84,32 @@ public class ChatbotController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // Estructura del cuerpo según la API de Gemini (simplificada)
-        // Puedes ajustar el "prompt" aquí para darle más contexto al chatbot
-        Map<String, Object> body = new HashMap<>();
-        Map<String, String> textPart = new HashMap<>();
-        textPart.put("text", "Eres un asistente virtual de la Librería Crisol. Responde de forma breve y amigable. Pregunta del usuario: " + request.getMessage());
-        Map<String, List<Map<String, String>>> content = new HashMap<>();
-        content.put("parts", Collections.singletonList(textPart));
-        body.put("contents", Collections.singletonList(content));
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        // Creamos el prompt (contexto)
+        String prompt = "Eres un asistente virtual de la Librería Crisol. Responde de forma breve y amigable. Pregunta del usuario: " + request.getMessage();
+        
+        // Usamos las clases POJO para crear el cuerpo de la solicitud (más seguro que Map)
+        GeminiRequest geminiRequest = new GeminiRequest(prompt);
+        HttpEntity<GeminiRequest> entity = new HttpEntity<>(geminiRequest, headers);
 
         try {
             // 2. Llamar a la API de Gemini
-            ResponseEntity<Map> response = restTemplate.exchange(
+            ResponseEntity<GeminiResponse> response = restTemplate.exchange(
                     geminiApiUrl,
                     HttpMethod.POST,
                     entity,
-                    Map.class // Esperamos una respuesta genérica tipo Map
+                    GeminiResponse.class // Mapea la respuesta directamente a nuestra clase POJO
             );
 
-            // 3. Extraer la respuesta de Gemini del JSON complejo que devuelve
-            //    NOTA: La estructura exacta de la respuesta puede cambiar, revisa la documentación de Gemini.
-            //    Este es un ejemplo basado en la estructura común.
+            // 3. Extraer la respuesta de forma segura
             String reply = "Lo siento, no pude procesar la respuesta."; // Mensaje por defecto
-            if (response.getBody() != null && response.getBody().containsKey("candidates")) {
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.getBody().get("candidates");
-                if (!candidates.isEmpty() && candidates.get(0).containsKey("content")) {
-                    Map<String, Object> contentResponse = (Map<String, Object>) candidates.get(0).get("content");
-                    if (contentResponse.containsKey("parts")) {
-                        List<Map<String, String>> parts = (List<Map<String, String>>) contentResponse.get("parts");
-                        if (!parts.isEmpty() && parts.get(0).containsKey("text")) {
-                            reply = parts.get(0).get("text");
-                        }
-                    }
-                }
+            if (response.getBody() != null && response.getBody().getReplyText() != null) {
+                reply = response.getBody().getReplyText();
             }
             
             return ResponseEntity.ok(new ChatResponseDTO(reply));
 
         } catch (Exception e) {
-            // Manejo básico de errores
+            // Manejo de errores
             System.err.println("Error llamando a la API de Gemini: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al comunicarse con el servicio de IA.", e);
         }
