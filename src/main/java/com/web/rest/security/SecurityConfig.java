@@ -4,7 +4,7 @@ import com.web.rest.service.impl.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpMethod; // Asegúrate de que HttpMethod esté importado
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -52,13 +52,13 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // ✅ Configuración global de CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // Tus orígenes permitidos (asegúrate de que la URL de Azure sea la correcta)
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:4200", // Angular local
-                "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" // Frontend en Azure
+                "http://localhost:4200",
+                "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" 
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
@@ -73,16 +73,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Aplica tu bean de CORS
             .authorizeHttpRequests(auth -> auth
+                // Endpoints públicos de autenticación
                 .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").permitAll()
 
+                // Endpoints públicos de solo lectura (GET)
                 .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/metodos-pago/**").permitAll()
+                
+                // --- LÍNEA AÑADIDA PARA EL CHATBOT ---
+                .requestMatchers(HttpMethod.POST, "/api/chatbot/ask").permitAll()
+                // ------------------------------------
 
+                // Endpoints de administrador
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
