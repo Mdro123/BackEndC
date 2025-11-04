@@ -4,7 +4,7 @@ import com.web.rest.service.impl.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpMethod; 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -25,7 +25,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Habilita las anotaciones @PreAuthorize en tus controladores
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -52,13 +52,12 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // Tu bean de CORS está perfecto, no se necesita cambiar
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:4200", // Angular local
-                "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" // Frontend en Azure
+                "http://localhost:4200", 
+                "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" 
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
@@ -83,24 +82,20 @@ public class SecurityConfig {
                     "/api/chatbot/ask" // Permite el chatbot
                 ).permitAll()
                 
-                // --- Endpoints GET Públicos (¡AQUÍ ESTÁ LA CORRECCIÓN!) ---
+                // --- Endpoints GET Públicos ---
                 .requestMatchers(HttpMethod.GET,
                     "/api/productos",
-                    "/api/productos/{id}",
-                    "/api/productos/buscar",
-                    "/api/productos/categoria/{idCategoria}",
-                    "/api/productos/mas-vendidos", // Permite los más vendidos
+                    "/api/productos/**", // Permite /productos/{id}, /buscar, /categoria/**
+                    "/api/productos/mas-vendidos", 
                     "/api/categorias",
-                    "/api/categorias/**", // Permite /categorias/{id} y /categorias/buscar
+                    "/api/categorias/**", 
                     "/api/metodos-pago",
                     "/api/metodos-pago/**"
                 ).permitAll()
                 
-                // --- Endpoints de Admin ---
-                // No necesitamos .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                // porque ya estás usando @PreAuthorize en tus controladores,
-                // lo cual es más flexible.
-                
+                // --- Endpoints de Admin (Protegidos por @PreAuthorize) ---
+                // .requestMatchers("/api/admin/**").hasRole("ADMIN") // Puedes quitar esto si usas @PreAuthorize
+
                 // --- Todo lo demás debe estar autenticado ---
                 .anyRequest().authenticated()
             )
