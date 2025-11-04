@@ -4,7 +4,7 @@ import com.web.rest.service.impl.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpMethod; // Asegúrate de que HttpMethod esté importado
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -52,16 +52,14 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // ✅ Configuración global de CORS
+    // ✅ Configuración global de CORS (Tu código original - sin cambios)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:4200", // Angular local
                 "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" // Frontend en Azure
         ));
-
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);
@@ -74,16 +72,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http.csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
 
                 .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").permitAll()
-
-                // ✅ Agregado para permitir el acceso al chatbot sin autenticación
-                .requestMatchers("/api/chatbot/**").permitAll()
-
+                .requestMatchers(HttpMethod.POST, "/api/chatbot/ask").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/metodos-pago/**").permitAll()
