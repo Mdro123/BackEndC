@@ -44,7 +44,6 @@ public class CategoriaServiceImpl implements CategoriaService {
         boolean isUpdate = categoriaDTO.getId() != null;
 
         if (isUpdate) {
-            // Lógica de Actualización
             categoria = categoriaRepository.findById(categoriaDTO.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + categoriaDTO.getId()));
 
@@ -57,7 +56,6 @@ public class CategoriaServiceImpl implements CategoriaService {
                 }
             }
         } else {
-            // Lógica de Creación
             if (categoriaRepository.findByNombreIgnoreCase(categoriaDTO.getNombre()).isPresent()) {
                 throw new IllegalArgumentException("Ya existe una categoría con el nombre: " + categoriaDTO.getNombre());
             }
