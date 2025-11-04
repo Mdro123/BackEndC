@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 
 public class ProductoDTO {
 
+    private Integer id;
+
     @NotBlank(message = "El título es obligatorio")
     @Size(min = 3, max = 100, message = "El título debe tener entre 3 y 100 caracteres")
     @Pattern(regexp = ".*[a-zA-ZáéíóúÁÉÍÓÚñÑ].*", message = "El título debe contener al menos una letra.")
@@ -22,28 +24,28 @@ public class ProductoDTO {
 
     @NotNull(message = "El precio es obligatorio")
     @DecimalMin(value = "0.01", message = "El precio debe ser mayor que cero.")
-    private BigDecimal precio;
+    private BigDecimal precio; 
 
     @NotNull(message = "El stock es obligatorio")
     @Min(value = 0, message = "El stock no puede ser negativo.")
     private Integer stock;
 
     @NotNull(message = "La categoría es obligatoria")
-    private Integer idCategoria; // Este SÍ va
+    private Integer idCategoria;
 
-    @NotBlank(message = "La URL de la imagen es obligatoria.")
+    @NotBlank(message = "La URL de la imagen es obligatoria.") 
     @Pattern(regexp = "^(https?://\\S+)\\.(jpg|jpeg|png)$", message = "URL inválida (sin espacios, con http/https, y terminar en .jpg, .jpeg o .png)")
     private String imagenUrl;
-
-    @NotBlank(message = "La sinopsis es obligatoria.")
+    
+    @NotBlank(message = "La sinopsis es obligatoria.") 
     @Size(max = 500, message = "La sinopsis no puede exceder los 500 caracteres.")
     @Pattern(regexp = ".*[a-zA-ZáéíóúÁÉÍÓÚñÑ].*", message = "La sinopsis debe contener al menos una letra.")
     private String sinopsis;
 
-    // Constructor vacío (necesario)
     public ProductoDTO() {
     }
-
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
     public String getIsbn() { return isbn; }
     public void setIsbn(String isbn) { this.isbn = isbn; }
     public String getTitulo() { return titulo; }
