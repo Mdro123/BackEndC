@@ -154,7 +154,7 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").permitAll()
 
-
+                .requestMatchers(HttpMethod.POST, "/api/chatbot/ask").permitAll()
 
                 .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
 
