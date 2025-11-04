@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate; // Para hacer llamadas HTTP
+import org.springframework.web.client.RestTemplate; 
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
