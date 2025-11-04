@@ -34,63 +34,45 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
+    // ... (tus @Beans de PasswordEncoder, AuthenticationManager, etc. están bien)
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
+    public PasswordEncoder passwordEncoder() { /* ... */ }
     @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(customUserDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
-
+    public DaoAuthenticationProvider authenticationProvider() { /* ... */ }
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception { /* ... */ }
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        // Tus orígenes permitidos (asegúrate de que la URL de Azure sea la correcta)
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:4200",
-                "https://wonderful-sky-0f2cfe81e.1.azurestaticapps.net" 
-        ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+    public CorsConfigurationSource corsConfigurationSource() { /* ... */ }
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Aplica tu bean de CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                // Endpoints públicos de autenticación
-                .requestMatchers("/api/usuarios/registro", "/api/usuarios/login").permitAll()
-
-                // Endpoints públicos de solo lectura (GET)
-                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/metodos-pago/**").permitAll()
                 
-                // --- LÍNEA AÑADIDA PARA EL CHATBOT ---
+                // --- SECCIÓN DE ENDPOINTS PÚBLICOS CORREGIDA ---
+                
+                // 1. Endpoints de Autenticación (POST)
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/registro", "/api/usuarios/login").permitAll()
+                
+                // 2. Endpoint del Chatbot (POST)
                 .requestMatchers(HttpMethod.POST, "/api/chatbot/ask").permitAll()
-                // ------------------------------------
 
-                // Endpoints de administrador
+                // 3. Endpoints de Catálogo (GET)
+                .requestMatchers(HttpMethod.GET, 
+                    "/api/productos/**",         // Permite ver todos los productos y un producto por ID
+                    "/api/categorias/**",        // Permite ver todas las categorías
+                    "/api/metodos-pago/**",    // Permite ver los métodos de pago
+                    "/api/productos/mas-vendidos" // Permite ver los más vendidos (si la ruta es esta)
+                ).permitAll()
+                
+                // --- FIN DE LA CORRECCIÓN ---
+
+                // 4. Endpoints de Administrador
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // Todo lo demás requiere autenticación
+                // 5. Todo lo demás requiere autenticación
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
