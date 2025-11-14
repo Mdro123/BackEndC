@@ -152,4 +152,26 @@ public class Producto {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    // --- MÉTODO NUEVO AÑADIDO (FASE VERDE) ---
+
+    /**
+     * Lógica de negocio TDD para determinar si el producto es elegible para envío gratis.
+     * Este método NO se mapea a la base de datos (no tiene @Column).
+     *
+     * @return true si el precio es S/ 100.00 o más, false en otro caso.
+     */
+    public boolean isElegibleParaEnvioGratis() {
+        // 1. Maneja el caso de prueba "testProductoSinPrecio"
+        if (this.precio == null) {
+            return false;
+        }
+
+        // 2. Define el umbral de envío gratis
+        BigDecimal umbralEnvioGratis = new BigDecimal("100.00");
+        
+        // 3. Compara el precio. (>= 0 significa "mayor o igual que")
+        //    Esto satisface las pruebas de 50 (falso), 150 (verdadero) y 100 (verdadero).
+        return this.precio.compareTo(umbralEnvioGratis) >= 0;
+    }
 }
