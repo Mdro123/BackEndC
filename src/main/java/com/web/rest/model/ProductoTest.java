@@ -3,7 +3,6 @@ package com.web.rest.model;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
-// Importa las funciones de aserción de JUnit 5
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProductoTest {
