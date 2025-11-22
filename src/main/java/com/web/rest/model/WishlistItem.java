@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 })
 public class WishlistItem {
 
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
