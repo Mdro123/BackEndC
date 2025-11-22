@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class WishlistItemResponseDTO {
-    private Integer id; // ID del ítem en la lista de deseos
+    private Integer id;
     private Integer productoId;
     private String titulo;
     private String autor;
@@ -12,7 +12,6 @@ public class WishlistItemResponseDTO {
     private String imagenUrl;
     private LocalDateTime addedAt;
 
-    // Constructor vacío
     public WishlistItemResponseDTO() {}
 
     // Getters y Setters
