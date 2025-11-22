@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,13 +16,13 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/wishlist")
-@CrossOrigin(origins = "http://localhost:4200/")
+@CrossOrigin(origins = "http://localhost:4200") // Asegúrate que coincida con tu frontend
 public class WishlistController {
 
     @Autowired
     private WishlistService wishlistService;
 
-    // Helper para obtener el ID del usuario autenticado (mismo que en PedidoController)
+    // Método auxiliar para obtener el ID del usuario logueado
     private Integer getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Usuario) {
@@ -32,14 +31,13 @@ public class WishlistController {
         throw new IllegalStateException("Usuario no autenticado.");
     }
 
-    // 1. Obtener mi lista de deseos
     @GetMapping
     @PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
     public ResponseEntity<List<WishlistItemResponseDTO>> getMyWishlist() {
         Integer userId = getAuthenticatedUserId();
         List<WishlistItem> items = wishlistService.getWishlistByUserId(userId);
         
-        // Convertir Entidades a DTOs
+        // Convertimos la lista de entidades a DTOs
         List<WishlistItemResponseDTO> response = items.stream().map(item -> {
             WishlistItemResponseDTO dto = new WishlistItemResponseDTO();
             dto.setId(item.getId());
@@ -55,7 +53,6 @@ public class WishlistController {
         return ResponseEntity.ok(response);
     }
 
-    // 2. Añadir producto a la lista
     @PostMapping("/add/{productId}")
     @PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
     public ResponseEntity<String> addToWishlist(@PathVariable Integer productId) {
@@ -64,7 +61,6 @@ public class WishlistController {
         return ResponseEntity.ok("Producto añadido a tu lista de deseos.");
     }
 
-    // 3. Eliminar producto de la lista
     @DeleteMapping("/remove/{productId}")
     @PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
     public ResponseEntity<String> removeFromWishlist(@PathVariable Integer productId) {
