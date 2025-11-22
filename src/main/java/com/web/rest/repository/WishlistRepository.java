@@ -17,4 +17,5 @@ public interface WishlistRepository extends JpaRepository<WishlistItem, Integer>
     
     // Obtiene toda la lista de deseos de un usuario
     List<WishlistItem> findByUsuario(Usuario usuario);
+    
 }
